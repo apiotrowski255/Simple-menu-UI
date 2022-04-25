@@ -17,6 +17,11 @@ local buttons = {}
 local font = nil
 
 function love.load()
+    sounds = {}
+    sounds.segmentation_fault = love.audio.newSource("sounds/Segmentation Fault.mp3", "stream")
+    sounds.segmentation_fault:play()
+    sounds.segmentation_fault:setVolume(0.3)
+    love.window.setTitle("Simple Menu UI")
     font = love.graphics.newFont(32)
 
     table.insert(buttons, newButton(
@@ -29,12 +34,14 @@ function love.load()
         "Load Game", 
         function()
             print("Loading game")
+            sounds.segmentation_fault:play()
         end))
 
     table.insert(buttons, newButton(
         "Settings", 
         function()
             print("going to Settings menu")
+            sounds.segmentation_fault:pause()
         end))
 
     table.insert(buttons, newButton(
@@ -42,6 +49,8 @@ function love.load()
         function()
             love.event.quit(0)
         end))
+
+
 end
 
 function love.update(dt)
@@ -68,12 +77,16 @@ function love.draw()
         local mx, my = love.mouse.getPosition()
         local hot = mx > bx and mx < bx + button_width and
                     my > by and my < by + BUTTON_HEIGHT
-
+        local button_expand = 0
         if hot then 
             color = {0.8, 0.8, 0.9, 1.0}
+            button_expand = 16
+            bx = bx - button_expand * 0.5
+            by = by - button_expand * 0.5
         end
 
         button.now = love.mouse.isDown(1)
+        
         if button.now and not button.last and hot then
             button.fn()
         end
@@ -83,18 +96,40 @@ function love.draw()
             "fill",
             bx,
             by,
-            button_width,
-            BUTTON_HEIGHT)    
+            button_width + button_expand,
+            BUTTON_HEIGHT + button_expand)    
+
+        -- Some Debugging help for myself, printing useful information on how button clicks work
+        love.graphics.setColor(1, 1, 1, 1)
+        if button.now then
+            love.graphics.print("button.now = true", love.graphics.newFont(12), 0, 0)
+        else 
+            love.graphics.print("button.now = false", love.graphics.newFont(12), 0, 0)
+        end
+
+        if button.last then
+            love.graphics.print("button.last = true", love.graphics.newFont(12), 0, 20)
+        else 
+            love.graphics.print("button.last = false", love.graphics.newFont(12), 0, 20)
+        end
+
+
+
 
         love.graphics.setColor(0, 0, 0, 1.0)
 
         local textW = font:getWidth(button.text)
-        local textH = font:getHeight(button.text)
+        local textH = (wh * 0.5) - (total_height * 0.5) + cursor_y + font:getHeight(button.text) * 0.5
+        
+        
+
         love.graphics.print(
             button.text,
             font,
             (ww * 0.5) - textW * 0.5,
-            by + textH * 0.5)
+            textH)
+
+        -- Increment cursor value
         cursor_y = cursor_y + (BUTTON_HEIGHT + margin)
     end
 end
