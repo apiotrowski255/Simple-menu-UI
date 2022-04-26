@@ -2,13 +2,18 @@
 
 BUTTON_HEIGHT = 64
 
-local function newButton(text, fn)
+local function newButton(text, fn, sound)
     return {
+        now = false,
+        last = false,
+
         text = text,
         fn = fn,
+        soundplayed = false,
+        overfn = function()
+            sound:play()
+        end,
 
-        now = false,
-        last = false
     }
 end
 
@@ -19,8 +24,10 @@ local font = nil
 function love.load()
     sounds = {}
     sounds.segmentation_fault = love.audio.newSource("sounds/Segmentation Fault.mp3", "stream")
+    sounds.segmentation_fault:setLooping(true)
+    sounds.snd_squeak = love.audio.newSource("sounds/snd_squeak.wav", "static")
     sounds.segmentation_fault:play()
-    sounds.segmentation_fault:setVolume(0.3)
+    sounds.segmentation_fault:setVolume(0.2)
     love.window.setTitle("Simple Menu UI")
     font = love.graphics.newFont(32)
 
@@ -28,27 +35,35 @@ function love.load()
         "Start Game", 
         function()
             print("Starting game")
-        end))
+        end,
+        sounds.snd_squeak
+    ))
 
     table.insert(buttons, newButton(
         "Load Game", 
         function()
             print("Loading game")
             sounds.segmentation_fault:play()
-        end))
+        end,
+        sounds.snd_squeak
+    ))
 
     table.insert(buttons, newButton(
         "Settings", 
         function()
             print("going to Settings menu")
             sounds.segmentation_fault:pause()
-        end))
+        end,
+        sounds.snd_squeak
+    ))
 
     table.insert(buttons, newButton(
         "Exit", 
         function()
             love.event.quit(0)
-        end))
+        end,
+        sounds.snd_squeak
+    ))
 
 
 end
@@ -80,9 +95,15 @@ function love.draw()
         local button_expand = 0
         if hot then 
             color = {0.8, 0.8, 0.9, 1.0}
-            button_expand = 16
+            button_expand = 8
             bx = bx - button_expand * 0.5
             by = by - button_expand * 0.5
+            if not button.soundplayed then
+                button.overfn()
+                button.soundplayed = true
+            end 
+        else
+            button.soundplayed = false
         end
 
         button.now = love.mouse.isDown(1)
@@ -112,7 +133,6 @@ function love.draw()
         else 
             love.graphics.print("button.last = false", love.graphics.newFont(12), 0, 20)
         end
-
 
 
 
